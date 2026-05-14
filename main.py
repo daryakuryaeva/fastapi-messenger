@@ -1,5 +1,7 @@
 import os
 import shutil
+import uvicorn
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi import Request
@@ -32,14 +34,12 @@ app.add_middleware(SessionMiddleware, secret_key="super-secret-key")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-templates = Jinja2Templates(directory="templates")
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 
 if not os.path.exists("uploads"):
     os.makedirs("uploads")
-
-
-# CURRENT_USER_ID = None
 
 pwd_context = CryptContext( schemes=["bcrypt"],deprecated="auto")
 
@@ -59,8 +59,8 @@ def home():
 @app.get("/register")
 def register_page(request: Request):
     return templates.TemplateResponse(
-        "register.html",
-        {"request": request}
+        name="login.html",
+        context={"request": request}
     )
 
 
@@ -90,8 +90,8 @@ def register(
 @app.get("/login")
 def login_page(request: Request):
     return templates.TemplateResponse(
-        "login.html",
-        {"request": request}
+        name="login.html",
+        context={"request": request}
     )
 
 
@@ -166,8 +166,8 @@ def chat_page(request: Request):
         ).all()
 
     return templates.TemplateResponse(
-        "chat.html",
-        {
+        name="chat.html",
+        context={
             "request": request,
             "users": users,
             "dialogs": dialogs,
@@ -225,10 +225,13 @@ def send_message(
     
 @app.get("/logout")
 def logout(request: Request):
-    
     request.session.clear()
 
     return RedirectResponse(
         url="/login",
         status_code=303
     )
+    
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
