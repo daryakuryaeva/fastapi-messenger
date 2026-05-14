@@ -113,7 +113,7 @@ def login(
     if not pwd_context.verify(password, user.password):
         return RedirectResponse(url="/login", status_code=303)
 
-    request.session["user.id"] = user.id
+    request.session["user_id"] = user.id
 
     return RedirectResponse(url="/chat", status_code=303)
 
